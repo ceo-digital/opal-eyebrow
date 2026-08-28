@@ -9,7 +9,7 @@ const icons = [
 
 export function GoldIcons({ className = '' }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 ${className}`}>
       {icons.map((icon) => (
         <a
           key={icon.label}
@@ -17,9 +17,9 @@ export function GoldIcons({ className = '' }: { className?: string }) {
           aria-label={icon.label}
           target={icon.external ? '_blank' : undefined}
           rel={icon.external ? 'noreferrer' : undefined}
-          className="flex size-9 items-center justify-center rounded-full border border-[#C9A227]/40 bg-creme transition-transform hover:scale-105 md:size-10"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#C9A227]/40 bg-creme transition-transform hover:scale-105 sm:size-9 md:size-10"
         >
-          <img src={icon.src} alt="" className="size-5 md:size-6" />
+          <img src={icon.src} alt="" className="size-4 sm:size-5 md:size-6" />
         </a>
       ))}
     </div>

@@ -31,9 +31,9 @@ export function HowItWorks() {
   )
 
   return (
-    <section ref={root} className="border-t border-bone bg-bone/30 px-5 py-14">
+    <section ref={root} className="border-t border-bone bg-bone/30 px-3 py-10 sm:px-5 sm:py-14">
       <div className="mx-auto max-w-4xl">
-        <h2 className="text-center font-hebrew text-4xl font-semibold text-clay md:text-6xl">
+        <h2 className="text-center font-hebrew text-3xl font-semibold text-clay sm:text-4xl md:text-6xl">
           איך קובעים תור
         </h2>
         <div className="mt-10 grid gap-4 md:grid-cols-3">

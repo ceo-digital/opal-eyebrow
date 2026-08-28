@@ -1,4 +1,5 @@
 import type { Booking } from '../types'
+import { allowsLocalBookings } from './consent'
 
 const STORAGE_KEY = 'opal-bookings'
 
@@ -13,6 +14,7 @@ export function loadBookings(): Booking[] {
 }
 
 export function saveBooking(booking: Booking) {
+  if (!allowsLocalBookings()) return loadBookings()
   const next = [...loadBookings(), booking]
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   return next

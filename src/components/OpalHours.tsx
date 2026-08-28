@@ -58,11 +58,13 @@ export function OpalHours() {
     .sort(([a], [b]) => a.localeCompare(b))
 
   return (
-    <div className="min-h-svh bg-creme px-5 py-8 text-ink">
-      <div className="mx-auto max-w-xl">
+    <div className="min-h-svh bg-creme px-3 py-6 text-ink sm:px-5 sm:py-8">
+      <div className="mx-auto w-full max-w-xl">
         <Logo compact />
-        <h1 className="mt-6 font-hebrew text-3xl font-semibold text-clay">השעות שלי</h1>
-        <p className="mt-2 font-hebrew text-base leading-7 text-oak">
+        <h1 className="mt-5 font-hebrew text-2xl font-semibold text-clay sm:mt-6 sm:text-3xl">
+          השעות שלי
+        </h1>
+        <p className="mt-2 font-hebrew text-sm leading-7 text-oak sm:text-base">
           כל בוקר בוחרים יום, מסמנים שעות פנויות ושומרים. רק אחרי השמירה הלקוחות רואות
           בחירה ביומן. בלי תשלום — זה נשמר באתר.
         </p>
@@ -73,7 +75,7 @@ export function OpalHours() {
             type="password"
             value={pin}
             onChange={(event) => setPin(event.target.value)}
-            className="rounded-full border border-oak/25 bg-transparent px-4 py-2.5 outline-none focus:border-oak"
+            className="min-h-11 w-full min-w-0 rounded-full border border-oak/25 bg-transparent px-4 py-2.5 text-base outline-none focus:border-oak"
           />
         </label>
 
@@ -83,12 +85,12 @@ export function OpalHours() {
             type="date"
             value={date}
             onChange={(event) => setDate(event.target.value)}
-            className="rounded-full border border-oak/25 bg-transparent px-4 py-2.5 outline-none focus:border-oak"
+            className="min-h-11 w-full min-w-0 rounded-full border border-oak/25 bg-transparent px-4 py-2.5 text-base outline-none focus:border-oak"
           />
         </label>
 
         <p className="mt-5 font-hebrew text-sm text-oak">לחצי על השעות הפנויות באותו יום</p>
-        <div className="mt-3 grid grid-cols-4 gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
           {choices.map((slot) => {
             const on = selected.includes(slot)
             return (
@@ -96,7 +98,7 @@ export function OpalHours() {
                 key={slot}
                 type="button"
                 onClick={() => toggle(slot)}
-                className={`rounded-full border py-2 text-sm ${
+                className={`min-h-11 rounded-full border py-2 text-sm ${
                   on ? 'border-clay bg-clay text-creme' : 'border-oak/25 text-clay'
                 }`}
               >
@@ -110,7 +112,7 @@ export function OpalHours() {
           type="button"
           onClick={() => void save()}
           disabled={saving}
-          className="mt-6 w-full rounded-full bg-clay py-3 font-hebrew text-base text-creme disabled:opacity-60"
+          className="mt-6 min-h-12 w-full rounded-full bg-clay py-3 font-hebrew text-base text-creme disabled:opacity-60"
         >
           {saving ? 'שומרת…' : 'שמירת שעות ליום הזה'}
         </button>
@@ -122,8 +124,8 @@ export function OpalHours() {
         ) : (
           <ul className="mt-3 space-y-2 font-hebrew text-sm text-clay">
             {upcoming.map(([key, slots]) => (
-              <li key={key}>
-                <button type="button" className="text-right" onClick={() => setDate(key)}>
+              <li key={key} className="break-words">
+                <button type="button" className="w-full text-right leading-6" onClick={() => setDate(key)}>
                   {key} · {slots.join(' · ')}
                 </button>
               </li>

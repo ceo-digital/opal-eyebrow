@@ -2,7 +2,7 @@ import { CONTACT, whatsappHref } from '../data/contact'
 
 export function FloatingActions() {
   return (
-    <div className="fixed bottom-4 left-4 z-30 flex flex-col gap-2">
+    <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(0.75rem,env(safe-area-inset-left))] z-30 flex flex-col gap-2">
       <a
         href={whatsappHref()}
         target="_blank"

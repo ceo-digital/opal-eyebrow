@@ -10,8 +10,8 @@ export function Logo({ className = '', compact = false }: LogoProps) {
       alt="Opal Eyebrow"
       className={
         compact
-          ? `h-24 w-auto sm:h-32 md:h-44 ${className}`
-          : `h-40 w-auto md:h-56 ${className}`
+          ? `h-16 w-auto max-w-[70vw] sm:h-24 md:h-36 ${className}`
+          : `h-28 w-auto max-w-[80vw] md:h-44 ${className}`
       }
     />
   )

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
       content="Opal Eyebrow — סטודיו יוקרתי לעיצוב גבות, הרמת גבות והרמת ריסים."
@@ -17,6 +17,22 @@
     />
   </head>
   <body>
+    <script>
+      try {
+        var a = JSON.parse(localStorage.getItem('opal-a11y') || '{}')
+        var scale = a.textScale != null ? a.textScale : a.largeText ? 1 : 0
+        if (scale === 1) document.documentElement.classList.add('a11y-large')
+        if (scale === 2) document.documentElement.classList.add('a11y-xlarge')
+        if (a.contrast && !a.yellowBlack) document.documentElement.classList.add('a11y-contrast')
+        if (a.yellowBlack) document.documentElement.classList.add('a11y-yellow')
+        if (a.highlightLinks) document.documentElement.classList.add('a11y-links')
+        if (a.highlightHeadings) document.documentElement.classList.add('a11y-headings')
+        if (a.readableFont) document.documentElement.classList.add('a11y-readable')
+        if (a.bigCursor) document.documentElement.classList.add('a11y-cursor')
+        if (a.spacing) document.documentElement.classList.add('a11y-spacing')
+        if (a.reduceMotion) document.documentElement.classList.add('a11y-reduce-motion')
+      } catch (e) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -26,26 +26,26 @@ export function Hero({ onSelect }: HeroProps) {
   )
 
   return (
-    <section ref={root} id="top" className="bg-creme px-5 pb-6 pt-4">
+    <section ref={root} id="top" className="bg-creme px-3 pb-6 pt-3 sm:px-5 sm:pt-4">
       <div
         dir="ltr"
-        className="mx-auto grid max-w-6xl items-stretch gap-6 md:grid-cols-2 md:gap-10"
+        className="mx-auto grid max-w-6xl items-stretch gap-4 md:grid-cols-2 md:gap-10"
       >
-        <div className="flex w-full flex-col">
+        <div className="order-2 flex w-full min-w-0 flex-col md:order-1">
           <PriceMenu onSelect={onSelect} />
           <div className="mt-4 flex flex-1 items-center justify-center">
             <img
               src="/brow-tools.png"
               alt=""
-              className="max-h-52 w-full object-contain mix-blend-multiply md:max-h-72"
+              className="max-h-40 w-full object-contain mix-blend-multiply sm:max-h-52 md:max-h-72"
             />
           </div>
         </div>
-        <div className="hero-portrait w-full overflow-hidden rounded-3xl bg-bone">
+        <div className="hero-portrait order-1 w-full overflow-hidden rounded-2xl bg-bone sm:rounded-3xl md:order-2">
           <img
             src="/opal-portrait.jpg"
             alt="אופל"
-            className="size-full min-h-[320px] object-cover object-[center_18%] md:min-h-full"
+            className="aspect-[4/5] size-full object-cover object-[center_18%] md:aspect-auto md:min-h-full"
           />
         </div>
       </div>
