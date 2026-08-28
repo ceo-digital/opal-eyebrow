@@ -1,9 +1,18 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "opal-eyebrow",
+  "main": "worker.ts",
   "compatibility_date": "2026-08-24",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
-  }
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "HOURS",
+      "id": "328bb379d2ee4597a47c05950f46252a"
+    }
+  ]
 }

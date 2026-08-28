@@ -6,10 +6,15 @@ import { Gallery } from './components/Gallery'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { HowItWorks } from './components/HowItWorks'
+import { OpalHours } from './components/OpalHours'
 import type { Service } from './types'
 
 export default function App() {
   const [selected, setSelected] = useState<Service | null>(null)
+
+  if (window.location.pathname === '/opal') {
+    return <OpalHours />
+  }
 
   return (
     <div className="bg-creme text-ink">

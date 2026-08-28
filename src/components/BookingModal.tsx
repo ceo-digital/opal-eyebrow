@@ -4,13 +4,11 @@ import gsap from 'gsap'
 import { WEEKDAY_LABELS } from '../data/availability'
 import { bookingWhatsappHref } from '../data/contact'
 import { isSlotTaken, createBookingId, saveBooking } from '../lib/bookings'
+import { loadPublishedHours } from '../lib/hours'
 import {
-  firstAvailableOnOrAfter,
   getMonthCells,
-  getTimeSlots,
   isPastDay,
   isSlotInPast,
-  isWorkingDay,
   isSameDay,
   longDate,
   monthTitle,
@@ -26,9 +24,10 @@ type BookingModalProps = {
 
 export function BookingModal({ service, onClose }: BookingModalProps) {
   const overlay = useRef<HTMLDivElement>(null)
-  const arrival = useMemo(() => firstAvailableOnOrAfter(new Date()), [])
-  const [cursor, setCursor] = useState(() => new Date(arrival.getFullYear(), arrival.getMonth(), 1))
-  const [selectedDate, setSelectedDate] = useState(arrival)
+  const today = useMemo(() => new Date(), [])
+  const [hoursByDate, setHoursByDate] = useState<Record<string, string[]>>({})
+  const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
+  const [selectedDate, setSelectedDate] = useState(today)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -40,7 +39,21 @@ export function BookingModal({ service, onClose }: BookingModalProps) {
     () => getMonthCells(cursor.getFullYear(), cursor.getMonth()),
     [cursor],
   )
-  const slots = useMemo(() => getTimeSlots(), [])
+  const slots = hoursByDate[toDateKey(selectedDate)] ?? []
+
+  useEffect(() => {
+    void loadPublishedHours().then((hours) => {
+      setHoursByDate(hours)
+      const firstOpen = Object.keys(hours)
+        .sort()
+        .map((key) => new Date(`${key}T12:00:00`))
+        .find((day) => !isPastDay(day) && (hours[toDateKey(day)]?.length ?? 0) > 0)
+      if (firstOpen) {
+        setSelectedDate(firstOpen)
+        setCursor(new Date(firstOpen.getFullYear(), firstOpen.getMonth(), 1))
+      }
+    })
+  }, [])
 
   useEffect(() => {
     const previous = document.body.style.overflow
@@ -69,7 +82,7 @@ export function BookingModal({ service, onClose }: BookingModalProps) {
   )
 
   function selectDay(day: Date) {
-    if (isPastDay(day) || !isWorkingDay(day)) return
+    if (isPastDay(day) || !(hoursByDate[toDateKey(day)]?.length)) return
     setSelectedDate(day)
     setSelectedTime(null)
     setError('')
@@ -196,7 +209,8 @@ export function BookingModal({ service, onClose }: BookingModalProps) {
               <div className="mt-1 grid grid-cols-7 gap-1">
                 {cells.map((day, index) => {
                   if (!day) return <span key={`empty-${index}`} />
-                  const available = isWorkingDay(day) && !isPastDay(day)
+                  const available =
+                    !isPastDay(day) && (hoursByDate[toDateKey(day)]?.length ?? 0) > 0
                   const selected = isSameDay(day, selectedDate)
                   const today = isSameDay(day, new Date())
 
@@ -225,35 +239,41 @@ export function BookingModal({ service, onClose }: BookingModalProps) {
               <div>
                 <p className="text-[0.7rem] tracking-[0.22em] text-oak">שעות פנויות</p>
                 <p className="mt-1 font-hebrew text-lg text-clay">{longDate(selectedDate)}</p>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {slots.map((slot) => {
-                    const taken =
-                      isSlotInPast(selectedDate, slot) ||
-                      isSlotTaken(toDateKey(selectedDate), slot)
-                    const active = selectedTime === slot
-                    return (
-                      <button
-                        key={`${slot}-${tick}`}
-                        type="button"
-                        disabled={taken}
-                        onClick={() => {
-                          setSelectedTime(slot)
-                          setTick((value) => value + 1)
-                          setError('')
-                        }}
-                        className={`rounded-full border px-2 py-2 text-sm ${
-                          active
-                            ? 'border-clay bg-clay text-creme'
-                            : taken
-                              ? 'border-oak/10 text-oak/30'
-                              : 'border-oak/25 text-clay hover:border-oak'
-                        }`}
-                      >
-                        {slot}
-                      </button>
-                    )
-                  })}
-                </div>
+                {slots.length === 0 ? (
+                  <p className="mt-4 font-hebrew text-sm leading-6 text-oak">
+                    אופל עדיין לא פתחה שעות ליום הזה. בחרי יום עם שעות, או נסי שוב מאוחר יותר.
+                  </p>
+                ) : (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {slots.map((slot) => {
+                      const taken =
+                        isSlotInPast(selectedDate, slot) ||
+                        isSlotTaken(toDateKey(selectedDate), slot)
+                      const active = selectedTime === slot
+                      return (
+                        <button
+                          key={`${slot}-${tick}`}
+                          type="button"
+                          disabled={taken}
+                          onClick={() => {
+                            setSelectedTime(slot)
+                            setTick((value) => value + 1)
+                            setError('')
+                          }}
+                          className={`rounded-full border px-2 py-2 text-sm ${
+                            active
+                              ? 'border-clay bg-clay text-creme'
+                              : taken
+                                ? 'border-oak/10 text-oak/30'
+                                : 'border-oak/25 text-clay hover:border-oak'
+                          }`}
+                        >
+                          {slot}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               <label className="flex flex-col gap-1.5 text-sm text-clay">
