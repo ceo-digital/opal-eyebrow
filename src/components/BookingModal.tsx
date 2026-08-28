@@ -1,0 +1,295 @@
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useGSAP } from '@gsap/react'
+import gsap from 'gsap'
+import { WEEKDAY_LABELS } from '../data/availability'
+import { bookingWhatsappHref } from '../data/contact'
+import { isSlotTaken, createBookingId, saveBooking } from '../lib/bookings'
+import {
+  firstAvailableOnOrAfter,
+  getMonthCells,
+  getTimeSlots,
+  isPastDay,
+  isSlotInPast,
+  isWorkingDay,
+  isSameDay,
+  longDate,
+  monthTitle,
+  toDateKey,
+} from '../lib/calendar'
+import type { Service } from '../types'
+import { ChevronIcon, CloseIcon } from './Icons'
+
+type BookingModalProps = {
+  service: Service
+  onClose: () => void
+}
+
+export function BookingModal({ service, onClose }: BookingModalProps) {
+  const overlay = useRef<HTMLDivElement>(null)
+  const arrival = useMemo(() => firstAvailableOnOrAfter(new Date()), [])
+  const [cursor, setCursor] = useState(() => new Date(arrival.getFullYear(), arrival.getMonth(), 1))
+  const [selectedDate, setSelectedDate] = useState(arrival)
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [error, setError] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const [tick, setTick] = useState(0)
+
+  const cells = useMemo(
+    () => getMonthCells(cursor.getFullYear(), cursor.getMonth()),
+    [cursor],
+  )
+  const slots = useMemo(() => getTimeSlots(), [])
+
+  useEffect(() => {
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previous
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [onClose])
+
+  useGSAP(
+    () => {
+      gsap.from('.booking-panel', {
+        opacity: 0,
+        y: 40,
+        scale: 0.96,
+        duration: 0.55,
+        ease: 'power4.out',
+      })
+    },
+    { scope: overlay },
+  )
+
+  function selectDay(day: Date) {
+    if (isPastDay(day) || !isWorkingDay(day)) return
+    setSelectedDate(day)
+    setSelectedTime(null)
+    setError('')
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedTime) {
+      setError('יש לבחור שעה פנויה')
+      return
+    }
+    if (!name.trim() || !phone.trim()) {
+      setError('יש למלא שם מלא וטלפון')
+      return
+    }
+
+    const fullName = name.trim()
+    const phoneNumber = phone.trim()
+    saveBooking({
+      id: createBookingId(),
+      serviceId: service.id,
+      serviceName: service.name,
+      date: toDateKey(selectedDate),
+      time: selectedTime,
+      name: fullName,
+      phone: phoneNumber,
+      notes: '',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    })
+    window.open(
+      bookingWhatsappHref({
+        name: fullName,
+        phone: phoneNumber,
+        serviceName: service.name,
+        dateLabel: longDate(selectedDate),
+        time: selectedTime,
+        price: service.price,
+      }),
+      '_blank',
+      'noopener,noreferrer',
+    )
+    setSubmitted(true)
+  }
+
+  return (
+    <div
+      ref={overlay}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-clay/35 p-0 backdrop-blur-sm md:items-center md:p-6"
+      onClick={(event) => {
+        if (event.target === overlay.current) onClose()
+      }}
+    >
+      <div className="booking-panel flex max-h-[94svh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl bg-creme shadow-2xl md:rounded-3xl">
+        <header className="flex items-start justify-between gap-4 border-b border-oak/15 px-5 py-5 md:px-8">
+          <div>
+            <p className="text-[0.7rem] tracking-[0.28em] text-oak">קביעת תור</p>
+            <h2 className="mt-1 font-hebrew text-2xl text-clay md:text-3xl">
+              {service.name}
+            </h2>
+            <p className="mt-1 font-display text-xl text-clay/80">{service.price} ₪</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-oak/20 p-2 text-clay"
+            aria-label="סגירה"
+          >
+            <CloseIcon />
+          </button>
+        </header>
+
+        {submitted ? (
+          <div className="px-6 py-16 text-center md:px-10">
+            <p className="text-[0.7rem] tracking-[0.3em] text-oak">נשלח לאופל</p>
+            <h3 className="mt-4 font-hebrew text-3xl text-clay">הבקשה בדרך לוואטסאפ</h3>
+            <p className="mx-auto mt-4 max-w-md font-hebrew leading-8 text-clay/75">
+              אופל מקבלת את השם, הטלפון, התאריך והשעה. כשהיא מאשרת בהודעה חזרה —
+              האישור מגיע אלייך לוואטסאפ. אפשר גם לשלוח תזכורת ידנית יום לפני התור.
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="luxury-btn mt-8 rounded-full bg-clay px-7 py-2.5 text-sm text-creme"
+            >
+              חזרה לאתר
+            </button>
+          </div>
+        ) : (
+          <div className="grid min-h-0 overflow-y-auto md:grid-cols-[1.1fr_0.9fr]">
+            <div className="border-b border-oak/15 px-5 py-6 md:border-b-0 md:border-l md:px-8">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  className="rounded-full border border-oak/20 p-2 text-clay"
+                  aria-label="חודש קודם"
+                  onClick={() =>
+                    setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))
+                  }
+                >
+                  <ChevronIcon className="size-4 rotate-180" />
+                </button>
+                <p className="font-hebrew text-xl text-clay">{monthTitle(cursor)}</p>
+                <button
+                  type="button"
+                  className="rounded-full border border-oak/20 p-2 text-clay"
+                  aria-label="חודש הבא"
+                  onClick={() =>
+                    setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))
+                  }
+                >
+                  <ChevronIcon className="size-4" />
+                </button>
+              </div>
+
+              <div className="mt-5 grid grid-cols-7 gap-1 text-center text-xs text-oak">
+                {WEEKDAY_LABELS.map((label) => (
+                  <span key={label} className="py-1">
+                    {label}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-1 grid grid-cols-7 gap-1">
+                {cells.map((day, index) => {
+                  if (!day) return <span key={`empty-${index}`} />
+                  const available = isWorkingDay(day) && !isPastDay(day)
+                  const selected = isSameDay(day, selectedDate)
+                  const today = isSameDay(day, new Date())
+
+                  return (
+                    <button
+                      key={toDateKey(day)}
+                      type="button"
+                      disabled={!available}
+                      onClick={() => selectDay(day)}
+                      className={`aspect-square rounded-full text-sm transition-colors ${
+                        selected
+                          ? 'bg-clay text-creme'
+                          : available
+                            ? 'text-clay hover:bg-bone'
+                            : 'text-oak/30'
+                      } ${today && !selected ? 'ring-1 ring-oak/40' : ''}`}
+                    >
+                      {day.getDate()}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <form className="flex flex-col gap-4 px-5 py-6 md:px-8" onSubmit={submit}>
+              <div>
+                <p className="text-[0.7rem] tracking-[0.22em] text-oak">שעות פנויות</p>
+                <p className="mt-1 font-hebrew text-lg text-clay">{longDate(selectedDate)}</p>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {slots.map((slot) => {
+                    const taken =
+                      isSlotInPast(selectedDate, slot) ||
+                      isSlotTaken(toDateKey(selectedDate), slot)
+                    const active = selectedTime === slot
+                    return (
+                      <button
+                        key={`${slot}-${tick}`}
+                        type="button"
+                        disabled={taken}
+                        onClick={() => {
+                          setSelectedTime(slot)
+                          setTick((value) => value + 1)
+                          setError('')
+                        }}
+                        className={`rounded-full border px-2 py-2 text-sm ${
+                          active
+                            ? 'border-clay bg-clay text-creme'
+                            : taken
+                              ? 'border-oak/10 text-oak/30'
+                              : 'border-oak/25 text-clay hover:border-oak'
+                        }`}
+                      >
+                        {slot}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <label className="flex flex-col gap-1.5 text-sm text-clay">
+                שם מלא
+                <input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  className="rounded-full border border-oak/25 bg-transparent px-4 py-2.5 outline-none focus:border-oak"
+                  autoComplete="name"
+                  required
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-sm text-clay">
+                טלפון
+                <input
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  className="rounded-full border border-oak/25 bg-transparent px-4 py-2.5 outline-none focus:border-oak"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  required
+                />
+              </label>
+
+              {error ? <p className="text-sm text-clay">{error}</p> : null}
+
+              <button
+                type="submit"
+                className="luxury-btn mt-1 rounded-full bg-clay py-3 text-sm tracking-[0.16em] text-creme"
+              >
+                שליחה לאופל לאישור
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
